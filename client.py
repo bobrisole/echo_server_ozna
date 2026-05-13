@@ -1,9 +1,9 @@
 import requests
-
+import random
 
 data = {}
 for number in range(1, 1001):
-    data[f"number_{number}"] = number
+    data[f"number_{number}"] = random.randint(1, 10) * random.randint(1, 10)
 
 # Отправляем POST-запрос
 response = requests.post(

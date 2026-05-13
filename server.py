@@ -24,8 +24,9 @@ def sendData():
     for key, value in data.items():
         if isinstance(value, (int, float)):
             multiplied_data[key] = value * 5
-        else:
-            multiplied_data[key] = value
+        elif isinstance(value, str):
+            multiplied_data[key] = value.upper()
+
 
     return jsonify(multiplied_data)
 
