@@ -2,7 +2,12 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# Главная страница
+@app.route("/")
+def home():
+    return "Server works!"
 
+# Эхо прикол
 @app.route("/echo", methods=["POST"])
 def echo():
     data = request.json
@@ -11,12 +16,17 @@ def echo():
         "you_sent": data
     })
 
-@app.route("/")
-def home():
-    return "Server works!"
+#Умножитель чисел JSONa на 5
+@app.route("/sendData", methods=["POST"])
+def sendData():
+    data = request.json
+    multiplied_data = {}
+    for key, value in data.items():
+        if isinstance(value, (int, float)):
+            multiplied_data[key] = value * 5
+        else:
+            multiplied_data[key] = value
 
-@app.route("/hello/<name>")
-def hello(name):
-    return f"Hello, {name}"
+    return jsonify(multiplied_data)
 
 app.run(debug=True)
