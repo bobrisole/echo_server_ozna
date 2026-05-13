@@ -28,7 +28,9 @@ def test_send_data():
         "/sendData",
         json={
             "a": 2,
-            "name": "robert"
+            "name": "robert",
+            "b": 0,
+            "c": "p2p?>"
         }
     )
 
@@ -37,3 +39,6 @@ def test_send_data():
     assert response.status_code == 200
     assert json_data["a"] == 10
     assert json_data["name"] == "ROBERT"
+    assert json_data["b"] == 0
+    assert json_data["c"] == "P2P?>"
+

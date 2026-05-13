@@ -10,7 +10,7 @@ def multiplication(data):
         elif isinstance(value, str):
             multiplied_data[key] = value.upper()
         else:
-            multiplied_data[key] = value
+            multiplied_data[key] = "ashalet"
     return multiplied_data
 
 def empty_json():
