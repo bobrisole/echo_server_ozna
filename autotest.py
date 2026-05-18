@@ -1,4 +1,4 @@
-from server import app
+from server1 import app
 
 
 client = app.test_client()

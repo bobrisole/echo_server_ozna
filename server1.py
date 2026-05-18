@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+from websocket import create_connection
+import json
 
 app = Flask(__name__)
 
@@ -22,7 +24,6 @@ def empty_json():
 def home():
     return "Server works!"
 
-
 @app.route("/echo", methods=["POST"])
 def echo():
     data = request.json
@@ -31,7 +32,6 @@ def echo():
         "you_sent": data
     })
 
-
 @app.route("/sendData", methods=["POST"])
 def sendData():
     data = request.json
@@ -39,6 +39,19 @@ def sendData():
         return empty_json()
     multiplied_data = multiplication(data)
     return jsonify(multiplied_data)
+
+
+@app.route("/send", methods=["POST"])
+def send_message():
+
+    data = request.json
+    ws = create_connection("ws://127.0.0.1:8000/ws", timeout=5)
+    print("Connection created")
+    ws.send(json.dumps(data))
+    result = ws.recv()
+    ws.close()
+    return jsonify({"response_from_websocket": json.loads(result)})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
