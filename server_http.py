@@ -1,48 +1,27 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
-import websockets
-import uvicorn
-import json
 import hashlib
-
-app = FastAPI()
-
+import asyncio
+from utils import (multiplication, save_http_hash, websocket_reconnect_loop, send_http_hash)
 ws_connection = None
+local_store = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global ws_connection
 
-    ws_connection = await websockets.connect("ws://127.0.0.1:8000/ws")
-    print("Connected to websocket server")
+    asyncio.create_task(websocket_reconnect_loop())
 
     yield
-    await ws_connection.close()
-    print("WebSocket closed")
+
+    if ws_connection:
+        await ws_connection.close()
+        print("WebSocket closed")
 
 app = FastAPI(lifespan=lifespan)
 
-
-def multiplication(data):
-
-    multiplied_data = {}
-
-    for key, value in data.items():
-
-        if isinstance(value, (int, float)):
-            multiplied_data[key] = value * 5
-
-        elif isinstance(value, str):
-            multiplied_data[key] = value.upper()
-
-        else:
-            multiplied_data[key] = "ashalet"
-
-    return multiplied_data
-
-
 @app.get("/")
-async def home():
+async def home_endpoint():
 
     return {
         "message": "Server works!"
@@ -50,7 +29,7 @@ async def home():
 
 
 @app.post("/echo")
-async def echo(data: dict):
+async def echo_endpoint(data: dict):
 
     return {
         "you_sent": data
@@ -58,20 +37,17 @@ async def echo(data: dict):
 
 
 @app.post("/sendData")
-async def send_data(data: dict):
+async def send_data_endpoint(data: dict):
 
     if not data:
-
-        return {
-            "error": "JSON is empty"
-        }
+        return {"error": "JSON is empty"}
 
     multiplied_data = multiplication(data)
-
     return multiplied_data
-    
+
+
 @app.post("/hash")
-async def create_hash(data: dict):
+async def hash_endpoint(data: dict):
     text = data["text"]
     hash_object = hashlib.sha256(text.encode()).hexdigest()
 
@@ -80,17 +56,14 @@ async def create_hash(data: dict):
     }
 
 @app.post("/sendLog")
-async def sendLog(data: dict):
+async def send_log_endpoint(data: dict):
+    save_http_hash(data, local_store, ws_connection)
+    print(local_store)
+    if ws_connection == None:
+        return {"error": "websocket unavailable"}
     try:
-        await ws_connection.send(json.dumps(data))
-        result = await ws_connection.recv()
-        
-        return json.loads(result)
+        await send_http_hash(data, ws_connection)
+        return {"status": "Ok"}
 
     except Exception as error:
-        return {"error": str(error)}
-
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=5000)
+        return{"error": str(error)}
