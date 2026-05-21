@@ -22,7 +22,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 data_string = json.dumps(inner_data)
                                                                                             #Хэширую
                 hash_result = hashlib.sha256(data_string.encode()).hexdigest()
-                                                                                            #Шаблон для ответа
                 response = {
                     "method": "sendLog",
                     "data": hash_result
