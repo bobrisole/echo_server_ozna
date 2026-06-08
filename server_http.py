@@ -2,15 +2,18 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import hashlib
 import asyncio
-from utils import (multiplication, save_http_hash, websocket_reconnect_loop, send_http_hash)
+from utils_http import (multiplication, save_http_hash, websocket_reconnect_loop, send_http_hash, retry_old_logs)
+from utils_http_storage import load_local_store
 ws_connection = None
-local_store = []
+local_store = load_local_store()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global ws_connection
 
     asyncio.create_task(websocket_reconnect_loop())
+    asyncio.create_task(retry_old_logs())
 
     yield
 
@@ -57,10 +60,11 @@ async def hash_endpoint(data: dict):
 
 @app.post("/sendLog")
 async def send_log_endpoint(data: dict):
-    save_http_hash(data, local_store, ws_connection)
-    print(local_store)
+    await save_http_hash(data, local_store)
+
     if ws_connection == None:
-        return {"error": "websocket unavailable"}
+        return {"error": "websocket unavailable, but data saved to local store"}
+
     try:
         await send_http_hash(data, ws_connection)
         return {"status": "Ok"}
